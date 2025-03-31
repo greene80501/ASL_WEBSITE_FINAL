@@ -6,6 +6,12 @@
     <title>Sign 2 Speak - Breaking Communication Barriers</title>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Add explicit Tailwind dark mode configuration -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
     <style>
         html {
             scroll-behavior: smooth; /* Add smooth scrolling */
@@ -482,60 +488,61 @@
     <script>
         // Wait for page to fully load to ensure all elements are available
         window.addEventListener('load', function() {
-            console.log('Page loaded, initializing scripts...'); // Added for clarity
+            console.log('Page loaded, initializing scripts...');
 
             // --- Dark Mode Toggle ---
             const themeToggleBtns = document.querySelectorAll('#theme-toggle, #mobile-theme-toggle');
-            const bodyElement = document.body; // Get body element once
+            const bodyElement = document.body;
 
             // Function to apply theme
             const applyTheme = (isDark) => {
-                console.log(`Attempting to apply theme: ${isDark ? 'Dark' : 'Light'}`); // Log intent
+                console.log(`Applying theme: ${isDark ? 'Dark' : 'Light'}`);
                 if (isDark) {
                     bodyElement.classList.add('dark');
                     localStorage.setItem('darkMode', 'true');
-                     console.log("Body class list:", bodyElement.classList.toString());
-                     console.log("localStorage darkMode:", localStorage.getItem('darkMode'));
                 } else {
                     bodyElement.classList.remove('dark');
                     localStorage.setItem('darkMode', 'false');
-                    console.log("Body class list:", bodyElement.classList.toString());
-                    console.log("localStorage darkMode:", localStorage.getItem('darkMode'));
                 }
-                 // Tailwind handles icon visibility based on the 'dark' class on the body/ancestor
             };
 
-            // Check initial theme preference
-            // Priority: localStorage -> System Preference -> Default (Light)
-            let initialIsDark;
-            const storedPreference = localStorage.getItem('darkMode');
-
-            if (storedPreference !== null) {
-                 initialIsDark = storedPreference === 'true';
-                 console.log(`Initial theme from localStorage: ${initialIsDark ? 'Dark' : 'Light'}`);
-            } else {
-                 initialIsDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-                 console.log(`Initial theme from system preference: ${initialIsDark ? 'Dark' : 'Light'}`);
-                 // Optionally save the detected system preference to localStorage immediately
-                 // localStorage.setItem('darkMode', initialIsDark ? 'true' : 'false');
-            }
-
-            applyTheme(initialIsDark); // Apply initial theme
+            // Check initial theme preference (localStorage -> System Preference -> Default Light)
+            const checkAndApplyInitialTheme = () => {
+                const storedPreference = localStorage.getItem('darkMode');
+                
+                if (storedPreference !== null) {
+                    // Use stored preference
+                    const isDark = storedPreference === 'true';
+                    console.log(`Using stored theme preference: ${isDark ? 'Dark' : 'Light'}`);
+                    applyTheme(isDark);
+                } else {
+                    // Use system preference
+                    const systemPrefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    console.log(`Using system theme preference: ${systemPrefersDark ? 'Dark' : 'Light'}`);
+                    applyTheme(systemPrefersDark);
+                }
+            };
+            
+            // Apply initial theme
+            checkAndApplyInitialTheme();
 
             // Add event listeners to toggle buttons
-            if (themeToggleBtns.length > 0) {
-                themeToggleBtns.forEach(btn => {
-                    btn.addEventListener('click', () => {
-                        const isCurrentlyDark = bodyElement.classList.contains('dark');
-                         console.log(`Toggle clicked. Currently dark: ${isCurrentlyDark}. Switching to ${!isCurrentlyDark ? 'Dark' : 'Light'}`);
-                        applyTheme(!isCurrentlyDark); // Apply the opposite theme
-                    });
+            themeToggleBtns.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const isCurrentlyDark = bodyElement.classList.contains('dark');
+                    console.log(`Toggle clicked. Switching from ${isCurrentlyDark ? 'Dark' : 'Light'} to ${!isCurrentlyDark ? 'Dark' : 'Light'}`);
+                    applyTheme(!isCurrentlyDark);
                 });
-                console.log('Dark mode toggle listeners attached.');
-            } else {
-                 console.error('Theme toggle buttons not found!');
-            }
+            });
 
+            // Listen for system theme changes
+            window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', e => {
+                // Only apply if no stored preference exists
+                if (localStorage.getItem('darkMode') === null) {
+                    console.log(`System theme changed to: ${e.matches ? 'Dark' : 'Light'}`);
+                    applyTheme(e.matches);
+                }
+            });
 
             // --- Mobile Menu Toggle ---
             const mobileMenuButton = document.getElementById('mobile-menu-button');
@@ -544,24 +551,20 @@
             if (mobileMenuButton && mobileMenu) {
                 mobileMenuButton.addEventListener('click', () => {
                     const isHidden = mobileMenu.classList.toggle('hidden');
-                    mobileMenuButton.setAttribute('aria-expanded', String(!isHidden)); // Use String() for attribute
-                    mobileMenu.setAttribute('aria-hidden', String(isHidden));          // Use String() for attribute
-                     console.log(`Mobile menu toggled. Hidden: ${isHidden}`);
+                    mobileMenuButton.setAttribute('aria-expanded', String(!isHidden));
+                    mobileMenu.setAttribute('aria-hidden', String(isHidden));
                 });
-                // Close menu if clicking a link inside it
+                
+                // Close menu when clicking links
                 mobileMenu.querySelectorAll('a').forEach(link => {
                     link.addEventListener('click', () => {
                         if (!mobileMenu.classList.contains('hidden')) {
                             mobileMenu.classList.add('hidden');
                             mobileMenuButton.setAttribute('aria-expanded', 'false');
                             mobileMenu.setAttribute('aria-hidden', 'true');
-                             console.log('Mobile menu closed via link click.');
                         }
                     });
                 });
-                console.log('Mobile menu initialized.');
-            } else {
-                 console.error('Mobile menu button or menu element not found.');
             }
 
             // --- Demo Video Play Button ---
@@ -569,15 +572,13 @@
             const demoVideoContainer = document.getElementById('demo-video-container');
             const demoPlaceholderImage = document.getElementById('demo-placeholder-image');
             const demoPlayOverlay = document.getElementById('demo-play-overlay');
-            // IMPORTANT: Replace 'dQw4w9WgXcQ' with your actual YouTube video ID
-            const youtubeVideoId = 'dQw4w9WgXcQ'; // Example ID, change this!
+            const youtubeVideoId = 'dQw4w9WgXcQ'; // Example ID
 
             if (playDemoButton && demoVideoContainer && demoPlaceholderImage && demoPlayOverlay) {
                 playDemoButton.addEventListener('click', () => {
-                    console.log('Play demo button clicked.');
-                    // Remove placeholder and button overlay
-                    if (demoPlaceholderImage) demoPlaceholderImage.style.display = 'none';
-                    if (demoPlayOverlay) demoPlayOverlay.style.display = 'none';
+                    // Hide placeholder and overlay
+                    demoPlaceholderImage.style.display = 'none';
+                    demoPlayOverlay.style.display = 'none';
 
                     // Create and append iframe
                     const iframe = document.createElement('iframe');
@@ -586,22 +587,11 @@
                     iframe.setAttribute('frameborder', '0');
                     iframe.setAttribute('allow', 'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share');
                     iframe.setAttribute('allowfullscreen', '');
-                    // Use Tailwind classes for responsive embedding
                     iframe.classList.add('absolute', 'top-0', 'left-0', 'w-full', 'h-full');
-
-                    // Clear container before appending (optional, good practice)
-                    // demoVideoContainer.innerHTML = '';
                     demoVideoContainer.appendChild(iframe);
-                    console.log('YouTube iframe added for demo video.');
                 });
-                 console.log('Demo play button initialized.');
-            } else {
-                 console.error('Demo video elements (button, container, image, overlay) not all found.');
             }
-
-            console.log('All scripts initialization attempt finished.');
         });
     </script>
-
 </body>
 </html>
